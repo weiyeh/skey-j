@@ -38,7 +38,6 @@ public class B64 {
 	}
 	
 	public static byte[] decode(String s){
-		System.out.println();
 		int padding = s.charAt(s.length() - 2) == '=' ? 2 : s.charAt(s.length() - 1) == '=' ? 1 : 0;
 		byte[] b = new byte[s.length() / 4 * 3 - padding];
 		char[] c = s.toCharArray();
@@ -73,30 +72,30 @@ public class B64 {
 	}
 	
 	private static char toB64(byte b){
-		if(b <= 9){
-			return (char) (b + 48);
-		}else if(b <= 35){
-			return (char) (b + 55);
-		}else if(b <= 61){
-			return (char) (b + 61);
+		if(b < 26){
+			return (char) (b + 65);
+		}else if(b < 52){
+			return (char) (b + 71);
+		}else if(b < 62){
+			return (char) (b - 4);
 		}else if(b == 62){
-			return '/';
-		}else{
 			return '+';
+		}else{
+			return '/';
 		}
 	}
 	
 	private static byte fromB64(char c){
 		if(c == '/'){
-			return (byte) 62;
-		}else if(c == '+'){
 			return (byte) 63;
+		}else if(c == '+'){
+			return (byte) 62;
 		}else if(c <= '9'){
-			return (byte) (c - 48);
+			return (byte) (c + 4);
 		}else if(c <= 'Z'){
-			return (byte) (c - 55);
+			return (byte) (c - 65);
 		}else{
-			return (byte) (c - 61);
+			return (byte) (c - 71);
 		}
 	}
 	

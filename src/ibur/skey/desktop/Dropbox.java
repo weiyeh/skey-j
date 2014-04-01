@@ -46,6 +46,11 @@ public class Dropbox {
 		}
 	}
 	
+	public static File getSkeyDbFile() throws Exception {
+		File db = getDropboxFolder();
+		return new File(db.getAbsolutePath() + File.separator + ".skey.dat");
+	}
+	
 	public static void main(String[] args) throws Exception{
 		File db = getDropboxFolder();
 		File pws = new File(db.getAbsolutePath() + File.separator + ".skey.dat");

@@ -7,7 +7,7 @@ public class PasswordGen {
 		do {
 			char[] out = new char[pwlen];
 			for(int i = 0; i < pwlen; i++) {
-				out[i] = charset[Util.r.nextInt(charset.length)];
+				out[i] = charset[Crypto.r.nextInt(charset.length)];
 			}
 			res = new String(out);
 		} while(!req.validatePW(res));

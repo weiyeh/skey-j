@@ -77,6 +77,7 @@ public class Crypto {
 			return out;
 		}
 		catch(Exception e) {
+			e.printStackTrace();
 			throw new Exception("Decryption failed");
 		}
 	}

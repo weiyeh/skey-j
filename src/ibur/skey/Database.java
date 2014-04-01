@@ -5,10 +5,10 @@ import ibur.lib.B64;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -61,7 +61,27 @@ public class Database {
 			throw new Exception("File parse failed");
 		}
 	}
-	
+
+	public Set<String> names() {
+		return db.keySet();
+	}
+
+	public String getPassword(String key) throws Exception {
+		try{
+			byte[] enc = B64.decode(db.get(key).get("PW"));
+
+			String scheme = db.get(key).get("ENCTYPE");
+			if("NONE".equals(scheme)) {
+				return new String(enc, "UTF-8");
+			} else if("AES128".equals(scheme)) {
+				return new String(Crypto.decryptBlob(Util.getPassword(), enc), "UTF-8");
+			}
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		return "Database: " + db.toString();

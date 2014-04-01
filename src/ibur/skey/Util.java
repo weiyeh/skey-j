@@ -16,9 +16,14 @@ public class Util {
 	
 	private static PasswordProvider pwProv;
 	
+	private static String password;
+	
 	public static String getPassword() {
 		try {
-			return pwProv.getPassword();
+			if(password == null) {
+				password = pwProv.getPassword();
+			}
+			return password;
 		}
 		catch(NullPointerException e) {
 			throw new RuntimeException("ERROR: No password provider.");

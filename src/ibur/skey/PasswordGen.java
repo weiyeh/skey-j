@@ -104,5 +104,9 @@ public class PasswordGen {
 
 			return ret;
 		}
+		
+		public double getEntropy(int len) {
+			return len * Math.log(getCharset().length)/Math.log(2);
+		}
 	}
 }

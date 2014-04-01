@@ -23,5 +23,6 @@ public class PasswordGenTest {
 		for(int i = 0; i < 10; i++) {
 			System.out.println(PasswordGen.generatePassword(30, req));
 		}
+		System.out.println(req.getEntropy(100));
 	}
 }

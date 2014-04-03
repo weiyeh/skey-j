@@ -3,8 +3,11 @@ package ibur.skey;
 import ibur.lib.B64;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,10 +65,37 @@ public class Database {
 		}
 	}
 
+	public void writeToFile(File out, boolean encNames) throws IOException {
+		BufferedWriter bw = new BufferedWriter(new FileWriter(out));
+		bw.write("ENCRYPTED:1\n");
+		
+		String password = null;
+		byte[] salt = null;
+		KeyParameter kp = null;
+		if(encNames) {
+			password = Util.getPassword();
+			salt = new byte[16];
+			Crypto.r.nextBytes(salt);
+			kp = Crypto.deriveKey(password, salt);
+		}
+		for(String key : db.keySet()) {
+			Map<String, String> entry = db.get(key);
+			String name = entry.get("NAME");
+			String url = entry.get("URL");
+			if(encNames) {
+				
+			}
+		}
+	}
+	
 	public Set<String> names() {
 		return db.keySet();
 	}
 
+	public Map<String, String> getEntry(String key) {
+		return db.get(key);
+	}
+	
 	public String getPassword(String key) throws Exception {
 		try{
 			byte[] enc = B64.decode(db.get(key).get("PW"));

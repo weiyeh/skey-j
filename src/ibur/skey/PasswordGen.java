@@ -1,6 +1,12 @@
 package ibur.skey;
 
 public class PasswordGen {
+	private static final PwReq DEFAULT_REQ = new PwReq();
+	
+	public static String generatePassword(int pwlen) {
+		return generatePassword(pwlen, DEFAULT_REQ);
+	}
+	
 	public static String generatePassword(int pwlen, PwReq req) {
 		char[] charset = req.getCharset();
 		String res = "";

@@ -6,6 +6,7 @@ import ibur.skey.Database;
 import ibur.skey.PasswordGen;
 import ibur.skey.Util;
 import ibur.skey.PasswordGen.PwReq;
+import ibur.skey.desktop.Dropbox;
 import ibur.skey.PasswordProvider;
 
 import java.io.BufferedWriter;
@@ -19,12 +20,28 @@ public class DatabaseTest {
 
 	@Test
 	public void dbTest() throws Exception{
-		generateDBTest();
-		loadDBTest();
+		Util.setPasswordProvider(new StaticPasswordProvider());
+		//generateDBTest();
+		//loadDBTest();
+		overallDBTest();
+	}
+	
+	public void overallDBTest() throws Exception {
+		Database d = new Database();
+		for(char a = 'A'; a <= 'Z'; a++) {
+			String pass = PasswordGen.generatePassword(100);
+			System.out.println(a + ": " + pass);
+			d.putPassword(a + "", pass, "AES128");
+		}
+		System.out.println(d);
+		File dropbox = Dropbox.getSkeyDbFile();
+		d.writeToFile(dropbox, Util.getPassword(false), true);
+		Database nd = new Database(dropbox);
+		System.out.println(nd);
 	}
 	
 	public void generateDBTest() throws Exception {
-		File db = new File(".skey.dat");
+		File db = new File("skey.dat");
 		BufferedWriter bw = new BufferedWriter(new FileWriter(db));
 		String password = "iburinoc";
 		byte[] mastersalt = new byte[16];
@@ -39,7 +56,7 @@ public class DatabaseTest {
 		String[] sites = new String[] {"Facebook", "Google", "Stanford"};
 		for(String s : sites) {
 			String res = B64.encode(Crypto.encrypt(key, s.getBytes("UTF-8")))
-					+ ",," +
+					+ "," +
 					"AES128,";
 			byte[] salt = new byte[16];
 			Crypto.r.nextBytes(salt);
@@ -56,8 +73,7 @@ public class DatabaseTest {
 	}
 
 	public void loadDBTest() throws Exception {
-		Util.setPasswordProvider(new StaticPasswordProvider());
-		File db = new File(".skey.dat");
+		File db = new File("skey.dat");
 		Database d = new Database(db);
 		System.out.println(d);
 		for(String s : d.names()) {

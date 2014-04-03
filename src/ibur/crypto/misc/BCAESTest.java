@@ -55,5 +55,6 @@ public class BCAESTest {
 		off = b.processBytes(out, 0, out.length, orig, 0);
 		off += b.doFinal(orig, off);
 		System.out.println(new String(orig, "UTF-8"));
+		sin.close();
 	}
 }

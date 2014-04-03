@@ -7,9 +7,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,11 +17,21 @@ import org.bouncycastle.crypto.params.KeyParameter;
 
 public class Database {
 	private Map<String, Map<String, String>> db;
+	private Set<String> changed;
+	private String origPassword;
+	private byte[] origSalt;
 
+	/**
+	 * Loads a database from the file
+	 * @param in
+	 * @throws Exception
+	 */
 	public Database(File in) throws Exception {
+		BufferedReader br = null;
 		try{
 			db = new HashMap<String, Map<String,String>>();
-			BufferedReader br = new BufferedReader(new FileReader(in));
+			changed = new HashSet<String>();
+			br = new BufferedReader(new FileReader(in));
 			String enc = br.readLine();
 
 			boolean encrypted = false;
@@ -33,83 +43,122 @@ public class Database {
 			byte[] salt = null;
 			KeyParameter kp = null;
 			if(encrypted) {
-				password = Util.getPassword();
+				password = Util.getPassword(false);
 				salt = B64.decode(br.readLine());
 				kp = Crypto.deriveKey(password, salt);
 			}
 
+			origPassword = password;
+			origSalt = salt;
+			
 			String line;
 			while((line = br.readLine()) != null) {
-				String[] parts = line.split(",");
 				if(encrypted) {
-					if(!"".equals(parts[0])) {
-						parts[0] = new String(Crypto.decrypt(kp, B64.decode(parts[0])), "UTF-8");
-					}
-					if(!"".equals(parts[1])) {
-						parts[1] = new String(Crypto.decrypt(kp, B64.decode(parts[1])), "UTF-8");
-					}
+					line = new String(Crypto.decrypt(kp, B64.decode(line)), "UTF-8").trim();
 				}
-				if(parts[0] != "") {
-					HashMap<String, String> subdb = new HashMap<String, String>();
-					subdb.put("NAME", parts[0]);
-					subdb.put("URL", parts[1]);
-					subdb.put("ENCTYPE", parts[2]);
-					subdb.put("PW", parts[3]);
-					db.put(parts[0], subdb);
+				String[] parts = line.split(",");
+				for(int i = 0; i < parts.length; i++) {
+					parts[i] = parts[i].trim();
 				}
+				HashMap<String, String> subdb = new HashMap<String, String>();
+				subdb.put("NAME", parts[0]);
+				subdb.put("SCHEME", parts[1]);
+				subdb.put("PW", parts[2]);
+				subdb.put("ORIG", line);
+				db.put(parts[0], subdb);
 			}
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 			throw new Exception("File parse failed");
 		}
-	}
-
-	public void writeToFile(File out, boolean encNames) throws IOException {
-		BufferedWriter bw = new BufferedWriter(new FileWriter(out));
-		bw.write("ENCRYPTED:1\n");
-		
-		String password = null;
-		byte[] salt = null;
-		KeyParameter kp = null;
-		if(encNames) {
-			password = Util.getPassword();
-			salt = new byte[16];
-			Crypto.r.nextBytes(salt);
-			kp = Crypto.deriveKey(password, salt);
-		}
-		for(String key : db.keySet()) {
-			Map<String, String> entry = db.get(key);
-			String name = entry.get("NAME");
-			String url = entry.get("URL");
-			if(encNames) {
-				
+		finally {
+			if(br != null) {
+				br.close();
 			}
 		}
 	}
+
+	/**
+	 * New empty password database
+	 */
+	public Database() {
+		db = new HashMap<String, Map<String,String>>();
+		changed = new HashSet<String>();
+	}
 	
+	public void writeToFile(File out, String password, boolean encString) throws Exception {
+		BufferedWriter bw = null;
+		try{
+			boolean samePass = password.equals(origPassword);
+			
+			bw = new BufferedWriter(new FileWriter(out));
+			bw.write("ENCRYPTED:" + (encString ? "1" : "0") + "\n");
+
+			byte[] salt = null;
+			KeyParameter kp = null;
+			if(encString) {
+				if(samePass) {
+					salt = origSalt;
+				} else {
+					salt = new byte[16];
+					Crypto.r.nextBytes(salt);
+				}
+				kp = Crypto.deriveKey(password, salt);
+			}
+			for(String key : db.keySet()) {
+				Map<String, String> entry = db.get(key);
+				if(!changed.contains(key) && samePass && entry.get("ORIG") != null) {
+					bw.write(entry.get("ORIG") + "\n");
+				} else {
+					String line = entry.get("NAME");
+					line += "," + entry.get("SCHEME") + ",";
+					line += entry.get("PW");
+					if(encString) {
+						line = B64.encode(Crypto.encrypt(kp, line.getBytes("UTF-8")));
+					}
+					bw.write(line + "\n");
+				}
+			}
+		}
+		finally {
+			if(bw != null) {
+				bw.close();
+			}
+		}
+	}
+
 	public Set<String> names() {
 		return db.keySet();
 	}
 
-	public Map<String, String> getEntry(String key) {
-		return db.get(key);
-	}
-	
 	public String getPassword(String key) throws Exception {
 		try{
 			byte[] enc = B64.decode(db.get(key).get("PW"));
 
 			String scheme = db.get(key).get("ENCTYPE");
-			if("NONE".equals(scheme)) {
-				return new String(enc, "UTF-8");
-			} else if("AES128".equals(scheme)) {
-				return new String(Crypto.decryptBlob(Util.getPassword(), enc), "UTF-8");
-			}
+			return new String(Crypto.decryptScheme(Util.getPassword(false), enc, scheme), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	public void putPassword(String name, String passString, String scheme) throws Exception {
+		try{
+			byte[] pw = passString.getBytes("UTF-8");
+			Map<String, String> entry = new HashMap<String, String>();
+			entry.put("NAME", name);
+			entry.put("SCHEME", scheme);
+			entry.put("PW", B64.encode(Crypto.encryptScheme(Util.getPassword(false), pw, scheme)));
+			db.put(name, entry);
+		} catch(UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String getScheme(String key) throws Exception {
+		return db.get(key).get("SCHEME");
 	}
 
 	@Override

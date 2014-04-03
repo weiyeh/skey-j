@@ -1,17 +1,20 @@
 package ibur.skey.test;
 
+import static org.junit.Assert.assertTrue;
 import ibur.lib.B64;
 import ibur.skey.Crypto;
 import ibur.skey.Database;
 import ibur.skey.PasswordGen;
-import ibur.skey.Util;
 import ibur.skey.PasswordGen.PwReq;
-import ibur.skey.desktop.Dropbox;
 import ibur.skey.PasswordProvider;
+import ibur.skey.Util;
+import ibur.skey.desktop.Dropbox;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
@@ -27,17 +30,25 @@ public class DatabaseTest {
 	}
 	
 	public void overallDBTest() throws Exception {
+		Map<String, String> passwords = new HashMap<String, String>();
 		Database d = new Database();
 		for(char a = 'A'; a <= 'Z'; a++) {
 			String pass = PasswordGen.generatePassword(100);
 			System.out.println(a + ": " + pass);
 			d.putPassword(a + "", pass, "AES128");
+			passwords.put(a + "", pass);
 		}
 		System.out.println(d);
 		File dropbox = Dropbox.getSkeyDbFile();
 		d.writeToFile(dropbox, Util.getPassword(false), true);
 		Database nd = new Database(dropbox);
 		System.out.println(nd);
+		
+		for(char a = 'A'; a <= 'Z'; a++) {
+			System.out.println(passwords.get(a + ""));
+			System.out.println(nd.getPassword(a+""));
+			assertTrue(passwords.get(a + "").equals(nd.getPassword(a+"")));
+		}
 	}
 	
 	public void generateDBTest() throws Exception {

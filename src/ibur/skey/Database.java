@@ -105,6 +105,7 @@ public class Database {
 					Crypto.r.nextBytes(salt);
 				}
 				kp = Crypto.deriveKey(password, salt);
+				bw.write(B64.encode(salt) + "\n");
 			}
 			for(String key : db.keySet()) {
 				Map<String, String> entry = db.get(key);
@@ -136,8 +137,8 @@ public class Database {
 		try{
 			byte[] enc = B64.decode(db.get(key).get("PW"));
 
-			String scheme = db.get(key).get("ENCTYPE");
-			return new String(Crypto.decryptScheme(Util.getPassword(false), enc, scheme), "UTF-8");
+			String scheme = db.get(key).get("SCHEME");
+			return new String(Crypto.decryptScheme(Util.getPassword(false), enc, scheme), "UTF-8").trim();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

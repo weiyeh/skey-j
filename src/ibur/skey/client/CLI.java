@@ -28,8 +28,8 @@ public class CLI {
 
 				} else if("get".equals(args[0])) {
 
-				} else if("new".equals(args[0])) {
-	
+				} else if("gen".equals(args[0])) {
+					genRun(removeStart(args, 1));
 				} else if("init".equals(args[0])) {
 					initRun(removeStart(args, 1));
 				} else if("initd".equals(args[0])) {
@@ -47,14 +47,32 @@ public class CLI {
 		}
 	}
 	
-	private static void initRun(String[] args) {
+	private static void genRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
 		parser.accepts("f", "File for the password database").withRequiredArg();
 		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
 		parser.accepts("debug", "Print all stack traces");
 		OptionSet options = parser.parse(args);
+	}
+	
+	private static void initRun(String[] args) {
+		OptionParser parser = new OptionParser();
+		parser.accepts("file", "File for the password database").withRequiredArg();
+		parser.accepts("f", "File for the password database").withRequiredArg();
+		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
+		parser.accepts("debug", "Print all stack traces");
+		parser.accepts("help", "Print usage information");
+		OptionSet options = parser.parse(args);
 		String fileName = null;
+		if(options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
 		if(options.has("f")) {
 			fileName = (String) options.valueOf("f");
 		} else if(options.has("file")) {
@@ -86,6 +104,9 @@ public class CLI {
 		if(fname == null) {
 			System.out.println("File name: ");
 			fname = in.nextLine();
+		}
+		if (fname.startsWith("~" + File.separator)) {
+		    fname = System.getProperty("user.home") + fname.substring(1);
 		}
 		File dbfile = new File(fname);
 		if(dbfile.exists()) {
@@ -119,7 +140,7 @@ public class CLI {
 		System.out.println("commands:");
 		System.out.println("   add     Add custom password to the database");
 		System.out.println("   get     Get a password from the database");
-		System.out.println("   new     Create a new password");
+		System.out.println("   gen     Create a new password");
 		System.out.println("   init    Create new password database");
 		System.out.println("   initd   Create new password database in the Dropbox folder");
 		System.out.println("   help    Show this dialog");
@@ -136,9 +157,9 @@ public class CLI {
 		public byte[] getPassword() {
 			System.out.print("Enter encryption/decryption password: ");
 			try{
-			if(Util.console == null) {
+				if(Util.console == null) {
 					return Util.sin.nextLine().getBytes("UTF-8");
-			} else {
+				} else {
 					return new String(Util.console.readPassword()).getBytes("UTF-8");
 				}
 			}

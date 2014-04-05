@@ -4,7 +4,6 @@ import ibur.skey.CryptoException;
 import ibur.skey.Database;
 import ibur.skey.PasswordProvider;
 import ibur.skey.Util;
-import ibur.skey.desktop.Dropbox;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,11 +28,11 @@ public class CLI {
 				} else if("get".equals(args[0])) {
 
 				} else if("new".equals(args[0])) {
-					initdRun(removeStart(args, 1));
+	
 				} else if("init".equals(args[0])) {
 					initRun(removeStart(args, 1));
 				} else if("initd".equals(args[0])) {
-
+					initdRun(removeStart(args, 1));
 				} else {
 					printUsage();
 				}
@@ -49,8 +48,8 @@ public class CLI {
 	
 	private static void initRun(String[] args) {
 		OptionParser parser = new OptionParser();
-		parser.accepts("file", "File for the password database").requiresArgument();
-		parser.accepts("f", "File for the password database").requiresArgument();
+		parser.accepts("file", "File for the password database").withRequiredArg();
+		parser.accepts("f", "File for the password database").withRequiredArg();
 		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
 		parser.accepts("debug", "Print all stack traces");
 		OptionSet options = parser.parse(args);

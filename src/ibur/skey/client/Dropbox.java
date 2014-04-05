@@ -1,4 +1,4 @@
-package ibur.skey.desktop;
+package ibur.skey.client;
 
 import ibur.lib.B64;
 import ibur.skey.Util;
@@ -25,8 +25,7 @@ public class Dropbox {
 						"host.db"; 
 			}
 			File db = new File(dbPath);
-			System.out.println(dbPath);
-			System.out.println(Arrays.toString(dbPath.toCharArray()));
+			
 			if(!db.exists()) {
 				throw new RuntimeException("No Dropbox folder found");
 			}
@@ -35,7 +34,7 @@ public class Dropbox {
 			String encodedPath = br.readLine();
 			byte[] decodedPath = B64.decode(encodedPath);
 			String dropboxPath = new String(decodedPath, "UTF-8");
-			System.out.println(dropboxPath);
+			
 			File dropboxFolder = new File(dropboxPath);
 			if(!dropboxFolder.exists()) {
 				throw new RuntimeException("No Dropbox folder found");

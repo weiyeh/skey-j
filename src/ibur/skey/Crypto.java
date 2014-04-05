@@ -32,7 +32,7 @@ public class Crypto {
 			System.err.println("ERROR: UTF-8 NOT SUPPORTED");
 			System.exit(-1);
 		}
-		return (KeyParameter) pcksgen.generateDerivedParameters(128);
+		return (KeyParameter) pcksgen.generateDerivedParameters(256);
 	}
 
 	public static byte[] createBlob(byte[] salt, byte[] ctext) {
@@ -108,7 +108,7 @@ public class Crypto {
 	}
 	
 	public static byte[] encryptScheme(String password, byte[] ptext, String scheme) throws Exception{
-		if("AES128".equals(scheme)) {
+		if("AES256".equals(scheme)) {
 			return encryptBlob(password, ptext);
 		} else if("NONE".equals(scheme)){
 			return ptext;
@@ -118,7 +118,7 @@ public class Crypto {
 	}
 	
 	public static byte[] decryptScheme(String password, byte[] ctext, String scheme) throws Exception{
-		if("AES128".equals(scheme)) {
+		if("AES256".equals(scheme)) {
 			return decryptBlob(password, ctext);
 		} else if("NONE".equals(scheme)){
 			return ctext;

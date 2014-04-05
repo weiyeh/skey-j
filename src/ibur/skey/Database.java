@@ -53,6 +53,7 @@ public class Database {
 			
 			String line;
 			while((line = br.readLine()) != null) {
+				String origLine = line;
 				if(encrypted) {
 					line = new String(Crypto.decrypt(kp, B64.decode(line)), "UTF-8").trim();
 				}
@@ -64,7 +65,7 @@ public class Database {
 				subdb.put("NAME", parts[0]);
 				subdb.put("SCHEME", parts[1]);
 				subdb.put("PW", parts[2]);
-				subdb.put("ORIG", line);
+				subdb.put("ORIG", origLine);
 				db.put(parts[0], subdb);
 			}
 		}
@@ -153,6 +154,7 @@ public class Database {
 			entry.put("SCHEME", scheme);
 			entry.put("PW", B64.encode(Crypto.encryptScheme(Util.getPassword(false), pw, scheme)));
 			db.put(name, entry);
+			changed.add(name);
 		} catch(UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

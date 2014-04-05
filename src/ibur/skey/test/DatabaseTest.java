@@ -24,8 +24,6 @@ public class DatabaseTest {
 	@Test
 	public void dbTest() throws Exception{
 		Util.setPasswordProvider(new StaticPasswordProvider());
-		//generateDBTest();
-		//loadDBTest();
 		overallDBTest();
 	}
 	
@@ -35,7 +33,7 @@ public class DatabaseTest {
 		for(char a = 'A'; a <= 'Z'; a++) {
 			String pass = PasswordGen.generatePassword(100);
 			System.out.println(a + ": " + pass);
-			d.putPassword(a + "", pass, "AES128");
+			d.putPassword(a + "", pass, "AES256");
 			passwords.put(a + "", pass);
 		}
 		System.out.println(d);
@@ -45,9 +43,25 @@ public class DatabaseTest {
 		System.out.println(nd);
 		
 		for(char a = 'A'; a <= 'Z'; a++) {
-			System.out.println(passwords.get(a + ""));
-			System.out.println(nd.getPassword(a+""));
+			System.out.println(a + ":" + passwords.get(a + ""));
+			System.out.println(a + ":" + nd.getPassword(a+""));
 			assertTrue(passwords.get(a + "").equals(nd.getPassword(a+"")));
+		}
+		System.out.println();
+		for(int i = 0; i < 13; i++) {
+			char c = (char) (Crypto.r.nextInt(26) + (Crypto.r.nextBoolean() ? 'A' : 'a'));
+			String pass = PasswordGen.generatePassword(100);
+			passwords.put(c + "", pass);
+			nd.putPassword(c + "", pass, "AES256");
+			System.out.println(c + ":" + pass);
+		}
+		nd.writeToFile(dropbox, Util.getPassword(false), true);
+		Database nnd = new Database(dropbox);
+		System.out.println();
+		for(String s : passwords.keySet()) {
+			System.out.println(s + ":" + passwords.get(s));
+			System.out.println(s + ":" + nd.getPassword(s));
+			assertTrue(passwords.get(s).equals(nnd.getPassword(s)));
 		}
 	}
 	
@@ -68,7 +82,7 @@ public class DatabaseTest {
 		for(String s : sites) {
 			String res = B64.encode(Crypto.encrypt(key, s.getBytes("UTF-8")))
 					+ "," +
-					"AES128,";
+					"AES256,";
 			byte[] salt = new byte[16];
 			Crypto.r.nextBytes(salt);
 			

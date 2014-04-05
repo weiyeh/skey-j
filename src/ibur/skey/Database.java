@@ -19,9 +19,10 @@ import org.bouncycastle.crypto.params.KeyParameter;
 public class Database {
 	private Map<String, Map<String, String>> db;
 	private Set<String> changed;
-	private String origPassword;
+	private byte[] origPassword;
 	private byte[] origSalt;
-
+	private String scheme;
+	
 	/**
 	 * Loads a database from the file
 	 * @param in
@@ -35,15 +36,15 @@ public class Database {
 			br = new BufferedReader(new FileReader(in));
 			String enc = br.readLine();
 
-			boolean encrypted = false;
+			scheme = "NONE";
 			if(enc.startsWith("ENCRYPTED:")) {
-				encrypted = enc.charAt(10) == 'Y' || enc.charAt(10) == 'T' || enc.charAt(10) == '1'; 
+				scheme = enc.substring(10); 
 			}
 
-			String password = null;
+			byte[] password = null;
 			byte[] salt = null;
 			KeyParameter kp = null;
-			if(encrypted) {
+			if("AES256".equals(scheme)) {
 				password = Util.getPassword(false);
 				salt = B64.decode(br.readLine());
 				kp = Crypto.deriveKey(password, salt);
@@ -55,7 +56,7 @@ public class Database {
 			String line;
 			while((line = br.readLine()) != null) {
 				String origLine = line;
-				if(encrypted) {
+				if("AES256".equals(scheme)) {
 					line = new String(Crypto.decrypt(kp, B64.decode(line)), "UTF-8").trim();
 				}
 				String[] parts = line.split(",");
@@ -83,23 +84,25 @@ public class Database {
 
 	/**
 	 * New empty password database
+	 * @param scheme TODO
 	 */
-	public Database() {
-		db = new HashMap<String, Map<String,String>>();
-		changed = new HashSet<String>();
+	public Database(String scheme) {
+		this.db = new HashMap<String, Map<String,String>>();
+		this.changed = new HashSet<String>();
+		this.scheme = scheme;
 	}
 	
-	public void writeToFile(File out, String password, boolean encString) throws CryptoException, IOException {
+	public void writeToFile(File out, byte[] password, String scheme) throws CryptoException, IOException {
 		BufferedWriter bw = null;
 		try{
-			boolean samePass = password.equals(origPassword);
+			boolean samePass = Util.byteArrEq(password, origPassword);
 			
 			bw = new BufferedWriter(new FileWriter(out));
-			bw.write("ENCRYPTED:" + (encString ? "1" : "0") + "\n");
+			bw.write("ENCRYPTED:" + scheme + "\n");
 
 			byte[] salt = null;
 			KeyParameter kp = null;
-			if(encString) {
+			if("AES256".equals(scheme)) {
 				if(samePass) {
 					salt = origSalt;
 				} else {
@@ -117,7 +120,7 @@ public class Database {
 					String line = entry.get("NAME");
 					line += "," + entry.get("SCHEME") + ",";
 					line += entry.get("PW");
-					if(encString) {
+					if("AES256".equals(scheme)) {
 						line = B64.encode(Crypto.encrypt(kp, line.getBytes("UTF-8")));
 					}
 					bw.write(line + "\n");

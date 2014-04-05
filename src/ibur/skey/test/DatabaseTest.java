@@ -13,6 +13,7 @@ import ibur.skey.client.Dropbox;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,10 +27,10 @@ public class DatabaseTest {
 		Util.setPasswordProvider(new StaticPasswordProvider());
 		overallDBTest();
 	}
-	
+
 	public void overallDBTest() throws Exception {
 		Map<String, String> passwords = new HashMap<String, String>();
-		Database d = new Database();
+		Database d = new Database("AES256");
 		for(char a = 'A'; a <= 'Z'; a++) {
 			String pass = PasswordGen.generatePassword(100);
 			System.out.println(a + ": " + pass);
@@ -38,10 +39,10 @@ public class DatabaseTest {
 		}
 		System.out.println(d);
 		File dropbox = Dropbox.getSkeyDbFile();
-		d.writeToFile(dropbox, Util.getPassword(false), true);
+		d.writeToFile(dropbox, Util.getPassword(false), "AES256");
 		Database nd = new Database(dropbox);
 		System.out.println(nd);
-		
+
 		for(char a = 'A'; a <= 'Z'; a++) {
 			System.out.println(a + ":" + passwords.get(a + ""));
 			System.out.println(a + ":" + nd.getPassword(a+""));
@@ -55,7 +56,7 @@ public class DatabaseTest {
 			nd.putPassword(c + "", pass, "AES256");
 			System.out.println(c + ":" + pass);
 		}
-		nd.writeToFile(dropbox, Util.getPassword(false), true);
+		nd.writeToFile(dropbox, Util.getPassword(false), "AES256");
 		Database nnd = new Database(dropbox);
 		System.out.println();
 		for(String s : passwords.keySet()) {
@@ -64,20 +65,20 @@ public class DatabaseTest {
 			assertTrue(passwords.get(s).equals(nnd.getPassword(s)));
 		}
 	}
-	
+
 	public void generateDBTest() throws Exception {
 		File db = new File("skey.dat");
 		BufferedWriter bw = new BufferedWriter(new FileWriter(db));
-		String password = "iburinoc";
+		byte[] password = "iburinoc".getBytes("UTF-8");
 		byte[] mastersalt = new byte[16];
 		Crypto.r.nextBytes(mastersalt);
-		
+
 		bw.write("ENCRYPTED:1\n");
 		bw.write(B64.encode(mastersalt) + "\n");
-		
+
 		KeyParameter key = Crypto.deriveKey(password, mastersalt);
 		PwReq req = new PwReq();
-		
+
 		String[] sites = new String[] {"Facebook", "Google", "Stanford"};
 		for(String s : sites) {
 			String res = B64.encode(Crypto.encrypt(key, s.getBytes("UTF-8")))
@@ -85,11 +86,11 @@ public class DatabaseTest {
 					"AES256,";
 			byte[] salt = new byte[16];
 			Crypto.r.nextBytes(salt);
-			
+
 			String passw = PasswordGen.generatePassword(50, req);
 			System.out.println(s + ": " + passw);
 			byte[] blob = Crypto.createBlob(salt, Crypto.encrypt(Crypto.deriveKey(password, salt), passw.getBytes("UTF-8")));
-			
+
 			res += B64.encode(blob);
 			res += "\n";
 			bw.write(res);
@@ -105,14 +106,22 @@ public class DatabaseTest {
 			System.out.println(s + ": " + d.getPassword(s));
 		}
 	}
-	
+
 	private static class StaticPasswordProvider implements PasswordProvider {
 
 		@Override
-		public String getPassword() {
-			return "iburinoc";
+		public byte[] getPassword() {
+			try{
+				return "iburinoc skey database gen test*!D".getBytes("UTF-8");
+			}
+			catch(UnsupportedEncodingException e) {
+				e.printStackTrace();
+				System.err.println("ERROR: UTF-8 NOT SUPPORTED.  EXITING.");
+				System.exit(-1);
+			}
+			return null;
 		}
-		
+
 	}
 
 }

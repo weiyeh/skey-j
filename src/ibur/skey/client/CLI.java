@@ -8,6 +8,7 @@ import ibur.skey.Util;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
 import joptsimple.OptionParser;
@@ -91,9 +92,9 @@ public class CLI {
 			throw new RuntimeException("File exists already");
 		}
 		try {
-			Database d = new Database();
-			String pw = Util.getPassword(true);
-			d.writeToFile(dbfile, pw, !options.has("no-encrypt-line"));
+			Database d = new Database("AES256");
+			byte[] pw = Util.getPassword(true);
+			d.writeToFile(dbfile, pw, "AES256");
 		}
 		catch(FileNotFoundException e) {
 			if(debug) {
@@ -132,13 +133,21 @@ public class CLI {
 	
 	private static class CLIPasswordProvider implements PasswordProvider {
 		@Override
-		public String getPassword() {
+		public byte[] getPassword() {
 			System.out.print("Enter encryption/decryption password: ");
+			try{
 			if(Util.console == null) {
-				return Util.sin.nextLine();
+					return Util.sin.nextLine().getBytes("UTF-8");
 			} else {
-				return new String(Util.console.readPassword());
+					return new String(Util.console.readPassword()).getBytes("UTF-8");
+				}
 			}
+			catch(UnsupportedEncodingException e) {
+				e.printStackTrace();
+				System.err.println("ERROR: UTF-8 NOT SUPPORTED.  EXITING.");
+				System.exit(-1);
+			}
+			return null;
 		}
 	}
 }

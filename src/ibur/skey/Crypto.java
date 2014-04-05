@@ -3,7 +3,6 @@ package ibur.skey;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -22,16 +21,9 @@ public class Crypto {
 
 	public static final SecureRandom r = new SecureRandom();
 
-	public static KeyParameter deriveKey(String password, byte[] salt) {
+	public static KeyParameter deriveKey(byte[] password, byte[] salt) {
 		PKCS5S2ParametersGenerator pcksgen = new PKCS5S2ParametersGenerator(new SHA256Digest());
-		byte[] saltBuf = new byte[16];
-		System.arraycopy(salt, 0, saltBuf, 0, 16);
-		try {
-			pcksgen.init(password.getBytes("UTF-8"), saltBuf, KDF_ROUNDS);
-		} catch (UnsupportedEncodingException e) {
-			System.err.println("ERROR: UTF-8 NOT SUPPORTED");
-			System.exit(-1);
-		}
+		pcksgen.init(password, salt, KDF_ROUNDS);
 		return (KeyParameter) pcksgen.generateDerivedParameters(256);
 	}
 
@@ -48,7 +40,7 @@ public class Crypto {
 		}
 	}
 
-	public static byte[] decryptBlob(String password, byte[] blob) throws CryptoException {
+	public static byte[] decryptBlob(byte[] password, byte[] blob) throws CryptoException {
 		try{
 			ByteArrayInputStream i = new ByteArrayInputStream(blob);
 			byte[] salt = new byte[16];
@@ -82,7 +74,7 @@ public class Crypto {
 		}
 	}
 
-	public static byte[] encryptBlob(String pw, byte[] ptext) throws CryptoException {
+	public static byte[] encryptBlob(byte[] pw, byte[] ptext) throws CryptoException {
 		byte[] salt = new byte[16];
 		r.nextBytes(salt);
 		KeyParameter kp = deriveKey(pw, salt);
@@ -107,7 +99,7 @@ public class Crypto {
 		}
 	}
 	
-	public static byte[] encryptScheme(String password, byte[] ptext, String scheme) throws CryptoException{
+	public static byte[] encryptScheme(byte[] password, byte[] ptext, String scheme) throws CryptoException{
 		if("AES256".equals(scheme)) {
 			return encryptBlob(password, ptext);
 		} else if("NONE".equals(scheme)){
@@ -117,7 +109,7 @@ public class Crypto {
 		}
 	}
 	
-	public static byte[] decryptScheme(String password, byte[] ctext, String scheme) throws CryptoException{
+	public static byte[] decryptScheme(byte[] password, byte[] ctext, String scheme) throws CryptoException{
 		if("AES256".equals(scheme)) {
 			return decryptBlob(password, ctext);
 		} else if("NONE".equals(scheme)){

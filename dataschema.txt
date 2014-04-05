@@ -1,0 +1,8 @@
+[NAMESENCRYPTED/NOTENCRYPTED]
+[SALT (if encrypted)]
+name,url,format,encrypted blob
+
+name: name of thingi jigger
+url: url for thingie jigger if relevant
+format: form of encryption, currently AES128
+blob: saltIVencrypted

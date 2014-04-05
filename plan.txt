@@ -1,0 +1,7 @@
+Skey
+====
+Pronounced ski
+
+Plan
+----
+Database of passwords, plaintext password never sent to server?  (Need AES for javascript to do that... hmm)

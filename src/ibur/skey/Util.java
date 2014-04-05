@@ -18,9 +18,9 @@ public class Util {
 	
 	private static String password;
 	
-	public static String getPassword() {
+	public static String getPassword(boolean forceRefresh) {
 		try {
-			if(password == null) {
+			if(password == null || forceRefresh) {
 				password = pwProv.getPassword();
 			}
 			return password;

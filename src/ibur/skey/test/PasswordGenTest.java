@@ -1,8 +1,8 @@
 package ibur.skey.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import ibur.skey.PasswordGen;
-import ibur.skey.Util;
 import ibur.skey.PasswordGen.PwReq;
 
 import org.junit.Test;

@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 public class Dropbox {
 	public static File getDropboxFolder() throws Exception {
+		BufferedReader br = null;
 		try{
 			String dbPath;
 			if(Util.isWindows()) {
@@ -29,7 +30,7 @@ public class Dropbox {
 			if(!db.exists()) {
 				throw new RuntimeException("No Dropbox host.db, Dropbox is required for this program to sync");
 			}
-			BufferedReader br = new BufferedReader(new FileReader(db));
+			br = new BufferedReader(new FileReader(db));
 			br.readLine();
 			String encodedPath = br.readLine();
 			byte[] decodedPath = B64.decode(encodedPath);
@@ -44,11 +45,16 @@ public class Dropbox {
 		catch(IOException e) {
 			throw e;
 		}
+		finally {
+			if(br != null) {
+				br.close();
+			}
+		}
 	}
 	
 	public static File getSkeyDbFile() throws Exception {
 		File db = getDropboxFolder();
-		return new File(db.getAbsolutePath() + File.separator + ".skey.dat");
+		return new File(db.getAbsolutePath() + File.separator + "skey.dat");
 	}
 	
 	public static void main(String[] args) throws Exception{

@@ -1,16 +1,20 @@
 package ibur.skey.test;
 
+import static org.junit.Assert.assertTrue;
 import ibur.lib.B64;
 import ibur.skey.Crypto;
 import ibur.skey.Database;
 import ibur.skey.PasswordGen;
-import ibur.skey.Util;
 import ibur.skey.PasswordGen.PwReq;
 import ibur.skey.PasswordProvider;
+import ibur.skey.Util;
+import ibur.skey.desktop.Dropbox;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
@@ -19,12 +23,50 @@ public class DatabaseTest {
 
 	@Test
 	public void dbTest() throws Exception{
-		generateDBTest();
-		loadDBTest();
+		Util.setPasswordProvider(new StaticPasswordProvider());
+		overallDBTest();
+	}
+	
+	public void overallDBTest() throws Exception {
+		Map<String, String> passwords = new HashMap<String, String>();
+		Database d = new Database();
+		for(char a = 'A'; a <= 'Z'; a++) {
+			String pass = PasswordGen.generatePassword(100);
+			System.out.println(a + ": " + pass);
+			d.putPassword(a + "", pass, "AES256");
+			passwords.put(a + "", pass);
+		}
+		System.out.println(d);
+		File dropbox = Dropbox.getSkeyDbFile();
+		d.writeToFile(dropbox, Util.getPassword(false), true);
+		Database nd = new Database(dropbox);
+		System.out.println(nd);
+		
+		for(char a = 'A'; a <= 'Z'; a++) {
+			System.out.println(a + ":" + passwords.get(a + ""));
+			System.out.println(a + ":" + nd.getPassword(a+""));
+			assertTrue(passwords.get(a + "").equals(nd.getPassword(a+"")));
+		}
+		System.out.println();
+		for(int i = 0; i < 13; i++) {
+			char c = (char) (Crypto.r.nextInt(26) + (Crypto.r.nextBoolean() ? 'A' : 'a'));
+			String pass = PasswordGen.generatePassword(100);
+			passwords.put(c + "", pass);
+			nd.putPassword(c + "", pass, "AES256");
+			System.out.println(c + ":" + pass);
+		}
+		nd.writeToFile(dropbox, Util.getPassword(false), true);
+		Database nnd = new Database(dropbox);
+		System.out.println();
+		for(String s : passwords.keySet()) {
+			System.out.println(s + ":" + passwords.get(s));
+			System.out.println(s + ":" + nd.getPassword(s));
+			assertTrue(passwords.get(s).equals(nnd.getPassword(s)));
+		}
 	}
 	
 	public void generateDBTest() throws Exception {
-		File db = new File(".skey.dat");
+		File db = new File("skey.dat");
 		BufferedWriter bw = new BufferedWriter(new FileWriter(db));
 		String password = "iburinoc";
 		byte[] mastersalt = new byte[16];
@@ -39,8 +81,8 @@ public class DatabaseTest {
 		String[] sites = new String[] {"Facebook", "Google", "Stanford"};
 		for(String s : sites) {
 			String res = B64.encode(Crypto.encrypt(key, s.getBytes("UTF-8")))
-					+ ",," +
-					"AES128,";
+					+ "," +
+					"AES256,";
 			byte[] salt = new byte[16];
 			Crypto.r.nextBytes(salt);
 			
@@ -56,8 +98,7 @@ public class DatabaseTest {
 	}
 
 	public void loadDBTest() throws Exception {
-		Util.setPasswordProvider(new StaticPasswordProvider());
-		File db = new File(".skey.dat");
+		File db = new File("skey.dat");
 		Database d = new Database(db);
 		System.out.println(d);
 		for(String s : d.names()) {

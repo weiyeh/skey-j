@@ -32,7 +32,7 @@ public class Crypto {
 			System.err.println("ERROR: UTF-8 NOT SUPPORTED");
 			System.exit(-1);
 		}
-		return (KeyParameter) pcksgen.generateDerivedParameters(128);
+		return (KeyParameter) pcksgen.generateDerivedParameters(256);
 	}
 
 	public static byte[] createBlob(byte[] salt, byte[] ctext) {
@@ -82,6 +82,13 @@ public class Crypto {
 		}
 	}
 
+	public static byte[] encryptBlob(String pw, byte[] ptext) throws Exception {
+		byte[] salt = new byte[16];
+		r.nextBytes(salt);
+		KeyParameter kp = deriveKey(pw, salt);
+		return createBlob(salt, encrypt(kp, ptext));
+	}
+	
 	public static byte[] encrypt(KeyParameter key, byte[] ptext) throws Exception {
 		try{
 			byte[] iv = new byte[16];
@@ -97,6 +104,26 @@ public class Crypto {
 		}
 		catch(Exception e) {
 			throw new Exception("Encryption failed");
+		}
+	}
+	
+	public static byte[] encryptScheme(String password, byte[] ptext, String scheme) throws Exception{
+		if("AES256".equals(scheme)) {
+			return encryptBlob(password, ptext);
+		} else if("NONE".equals(scheme)){
+			return ptext;
+		} else {
+			throw new RuntimeException("Scheme not recognized");
+		}
+	}
+	
+	public static byte[] decryptScheme(String password, byte[] ctext, String scheme) throws Exception{
+		if("AES256".equals(scheme)) {
+			return decryptBlob(password, ctext);
+		} else if("NONE".equals(scheme)){
+			return ctext;
+		} else {
+			throw new RuntimeException("Scheme not recognized");
 		}
 	}
 }

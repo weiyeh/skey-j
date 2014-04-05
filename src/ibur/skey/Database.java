@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,7 +89,7 @@ public class Database {
 		changed = new HashSet<String>();
 	}
 	
-	public void writeToFile(File out, String password, boolean encString) throws Exception {
+	public void writeToFile(File out, String password, boolean encString) throws CryptoException, IOException {
 		BufferedWriter bw = null;
 		try{
 			boolean samePass = password.equals(origPassword);

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class Dropbox {
-	public static File getDropboxFolder() throws Exception {
+	public static File getDropboxFolder() throws IOException {
 		BufferedReader br = null;
 		try{
 			String dbPath;
@@ -28,7 +28,7 @@ public class Dropbox {
 			System.out.println(dbPath);
 			System.out.println(Arrays.toString(dbPath.toCharArray()));
 			if(!db.exists()) {
-				throw new RuntimeException("No Dropbox host.db, Dropbox is required for this program to sync");
+				throw new RuntimeException("No Dropbox folder found");
 			}
 			br = new BufferedReader(new FileReader(db));
 			br.readLine();
@@ -38,7 +38,7 @@ public class Dropbox {
 			System.out.println(dropboxPath);
 			File dropboxFolder = new File(dropboxPath);
 			if(!dropboxFolder.exists()) {
-				throw new RuntimeException("No Dropbox folder, Dropbox is required for this program to sync");
+				throw new RuntimeException("No Dropbox folder found");
 			}
 			return dropboxFolder;
 		}
@@ -52,7 +52,7 @@ public class Dropbox {
 		}
 	}
 	
-	public static File getSkeyDbFile() throws Exception {
+	public static File getSkeyDbFile() throws IOException {
 		File db = getDropboxFolder();
 		return new File(db.getAbsolutePath() + File.separator + "skey.dat");
 	}

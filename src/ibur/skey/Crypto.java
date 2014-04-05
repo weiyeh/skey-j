@@ -48,7 +48,7 @@ public class Crypto {
 		}
 	}
 
-	public static byte[] decryptBlob(String password, byte[] blob) throws Exception {
+	public static byte[] decryptBlob(String password, byte[] blob) throws CryptoException {
 		try{
 			ByteArrayInputStream i = new ByteArrayInputStream(blob);
 			byte[] salt = new byte[16];
@@ -66,7 +66,7 @@ public class Crypto {
 		}
 	}
 
-	public static byte[] decrypt(KeyParameter key, byte[] ctext) throws Exception {
+	public static byte[] decrypt(KeyParameter key, byte[] ctext) throws CryptoException {
 		try{
 			byte[] iv = new byte[16];
 			System.arraycopy(ctext, 0, iv, 0, 16);
@@ -78,18 +78,18 @@ public class Crypto {
 		}
 		catch(Exception e) {
 			e.printStackTrace();
-			throw new Exception("Decryption failed");
+			throw new CryptoException("Decryption failed");
 		}
 	}
 
-	public static byte[] encryptBlob(String pw, byte[] ptext) throws Exception {
+	public static byte[] encryptBlob(String pw, byte[] ptext) throws CryptoException {
 		byte[] salt = new byte[16];
 		r.nextBytes(salt);
 		KeyParameter kp = deriveKey(pw, salt);
 		return createBlob(salt, encrypt(kp, ptext));
 	}
 	
-	public static byte[] encrypt(KeyParameter key, byte[] ptext) throws Exception {
+	public static byte[] encrypt(KeyParameter key, byte[] ptext) throws CryptoException {
 		try{
 			byte[] iv = new byte[16];
 			r.nextBytes(iv);
@@ -103,11 +103,11 @@ public class Crypto {
 			return o.toByteArray();
 		}
 		catch(Exception e) {
-			throw new Exception("Encryption failed");
+			throw new CryptoException("Encryption failed");
 		}
 	}
 	
-	public static byte[] encryptScheme(String password, byte[] ptext, String scheme) throws Exception{
+	public static byte[] encryptScheme(String password, byte[] ptext, String scheme) throws CryptoException{
 		if("AES256".equals(scheme)) {
 			return encryptBlob(password, ptext);
 		} else if("NONE".equals(scheme)){
@@ -117,7 +117,7 @@ public class Crypto {
 		}
 	}
 	
-	public static byte[] decryptScheme(String password, byte[] ctext, String scheme) throws Exception{
+	public static byte[] decryptScheme(String password, byte[] ctext, String scheme) throws CryptoException{
 		if("AES256".equals(scheme)) {
 			return decryptBlob(password, ctext);
 		} else if("NONE".equals(scheme)){

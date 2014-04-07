@@ -1,5 +1,6 @@
 package ibur.skey.client;
 
+import static ibur.skey.Crypto.AES256;
 import ibur.skey.CryptoException;
 import ibur.skey.Database;
 import ibur.skey.PasswordProvider;
@@ -113,9 +114,14 @@ public class CLI {
 			throw new RuntimeException("File exists already");
 		}
 		try {
-			Database d = new Database("AES256");
+			Database d = new Database(AES256);
 			byte[] pw = Util.getPassword(true);
-			d.writeToFile(dbfile, pw, "AES256");
+			d.writeToFile(dbfile, pw, AES256);
+			Properties prefs = DesktopFS.getPrefs();
+			if(prefs.getProperty("Default-DB") == null || options.has("set-default")) {
+				prefs.setProperty("Default-DB", fname);
+				DesktopFS.storePrefs(prefs);
+			}
 		}
 		catch(FileNotFoundException e) {
 			if(debug) {

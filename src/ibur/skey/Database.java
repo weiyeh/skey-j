@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bouncycastle.crypto.params.KeyParameter;
+import static ibur.skey.Crypto.AES256;
 
 public class Database {
 	private Map<String, Map<String, String>> db;
@@ -44,7 +45,7 @@ public class Database {
 			byte[] password = null;
 			byte[] salt = null;
 			KeyParameter kp = null;
-			if("AES256".equals(scheme)) {
+			if(AES256.equals(scheme)) {
 				password = Util.getPassword(false);
 				salt = B64.decode(br.readLine());
 				kp = Crypto.deriveKey(password, salt);
@@ -56,7 +57,7 @@ public class Database {
 			String line;
 			while((line = br.readLine()) != null) {
 				String origLine = line;
-				if("AES256".equals(scheme)) {
+				if(AES256.equals(scheme)) {
 					line = new String(Crypto.decrypt(kp, B64.decode(line)), "UTF-8").trim();
 				}
 				String[] parts = line.split(",");
@@ -102,7 +103,7 @@ public class Database {
 
 			byte[] salt = null;
 			KeyParameter kp = null;
-			if("AES256".equals(scheme)) {
+			if(AES256.equals(scheme)) {
 				if(samePass) {
 					salt = origSalt;
 				} else {
@@ -120,7 +121,7 @@ public class Database {
 					String line = entry.get("NAME");
 					line += "," + entry.get("SCHEME") + ",";
 					line += entry.get("PW");
-					if("AES256".equals(scheme)) {
+					if(AES256.equals(scheme)) {
 						line = B64.encode(Crypto.encrypt(kp, line.getBytes("UTF-8")));
 					}
 					bw.write(line + "\n");

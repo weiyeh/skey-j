@@ -20,6 +20,7 @@ public class Crypto {
 	private static final PaddedBufferedBlockCipher AES = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()), new PKCS7Padding());
 
 	public static final SecureRandom r = new SecureRandom();
+	public static final String AES256 = "AES256";
 
 	public static KeyParameter deriveKey(byte[] password, byte[] salt) {
 		PKCS5S2ParametersGenerator pcksgen = new PKCS5S2ParametersGenerator(new SHA256Digest());
@@ -100,7 +101,7 @@ public class Crypto {
 	}
 	
 	public static byte[] encryptScheme(byte[] password, byte[] ptext, String scheme) throws CryptoException{
-		if("AES256".equals(scheme)) {
+		if(AES256.equals(scheme)) {
 			return encryptBlob(password, ptext);
 		} else if("NONE".equals(scheme)){
 			return ptext;
@@ -110,7 +111,7 @@ public class Crypto {
 	}
 	
 	public static byte[] decryptScheme(byte[] password, byte[] ctext, String scheme) throws CryptoException{
-		if("AES256".equals(scheme)) {
+		if(AES256.equals(scheme)) {
 			return decryptBlob(password, ctext);
 		} else if("NONE".equals(scheme)){
 			return ctext;

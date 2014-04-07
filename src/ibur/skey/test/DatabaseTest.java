@@ -20,6 +20,8 @@ import java.util.Map;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
+import static ibur.skey.Crypto.AES256;
+
 public class DatabaseTest {
 
 	@Test
@@ -30,16 +32,16 @@ public class DatabaseTest {
 
 	public void overallDBTest() throws Exception {
 		Map<String, String> passwords = new HashMap<String, String>();
-		Database d = new Database("AES256");
+		Database d = new Database(AES256);
 		for(char a = 'A'; a <= 'Z'; a++) {
 			String pass = PasswordGen.generatePassword(100);
 			System.out.println(a + ": " + pass);
-			d.putPassword(a + "", pass, "AES256");
+			d.putPassword(a + "", pass, AES256);
 			passwords.put(a + "", pass);
 		}
 		System.out.println(d);
-		File dropbox = Dropbox.getSkeyDbFile();
-		d.writeToFile(dropbox, Util.getPassword(false), "AES256");
+		File dropbox = DesktopFS.getSkeyDropboxFile();
+		d.writeToFile(dropbox, Util.getPassword(false), AES256);
 		Database nd = new Database(dropbox);
 		System.out.println(nd);
 
@@ -53,10 +55,10 @@ public class DatabaseTest {
 			char c = (char) (Crypto.r.nextInt(26) + (Crypto.r.nextBoolean() ? 'A' : 'a'));
 			String pass = PasswordGen.generatePassword(100);
 			passwords.put(c + "", pass);
-			nd.putPassword(c + "", pass, "AES256");
+			nd.putPassword(c + "", pass, AES256);
 			System.out.println(c + ":" + pass);
 		}
-		nd.writeToFile(dropbox, Util.getPassword(false), "AES256");
+		nd.writeToFile(dropbox, Util.getPassword(false), AES256);
 		Database nnd = new Database(dropbox);
 		System.out.println();
 		for(String s : passwords.keySet()) {

@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Properties;
 import java.util.Scanner;
 
 import joptsimple.OptionParser;
@@ -52,16 +53,67 @@ public class CLI {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
 		parser.accepts("f", "File for the password database").withRequiredArg();
-		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
+		parser.accepts("name", "Name for new password").withRequiredArg();
+		parser.accepts("n", "Name for new password").withRequiredArg();
+		parser.accepts("l", "Length for new password").withRequiredArg();
 		parser.accepts("debug", "Print all stack traces");
+		parser.accepts("help", "Print usage information");
 		OptionSet options = parser.parse(args);
+		if(options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		String fname = null;
+		if(options.has("file")) {
+			fname = (String) options.valueOf("file");
+		} else if(options.has("f")) {
+			fname = (String) options.valueOf("f");
+		} else {
+			Properties prefs = DesktopFS.getPrefs();
+			fname = prefs.getProperty("Default-DB"); // will stay null if does not exist
+		}
+		if(fname == null) {
+			System.out.println("File name: ");
+			fname = in.nextLine();
+		}
+		if (fname.startsWith("~" + File.separator)) {
+		    fname = System.getProperty("user.home") + fname.substring(1);
+		}
+		
+		String pwname = null;
+		if(options.has("name")) {
+			pwname = (String) options.valueOf("name");
+		} else if(options.has("n")) {
+			pwname = (String) options.valueOf("n");
+		}
+		if(pwname == null) {
+			System.out.println("Enter entry name for this password");
+			pwname = in.nextLine();
+		}
+		if("".equals(pwname)) {
+			throw new RuntimeException("Invalid password name");
+		}
+		
+		int len = -1;
+		if(options.has("l")) {
+			try {
+				len = Integer.parseInt(options.valueOf("l"));
+			}
+			catch(NumberFormatException e) {
+				throw new RuntimeException("Invalid length of ")
+			}
+		}
 	}
 	
 	private static void initRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
 		parser.accepts("f", "File for the password database").withRequiredArg();
-		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
+		parser.accepts("set-default", "Set this as the default password database if one already exists");
 		parser.accepts("debug", "Print all stack traces");
 		parser.accepts("help", "Print usage information");
 		OptionSet options = parser.parse(args);
@@ -84,12 +136,21 @@ public class CLI {
 	
 	private static void initdRun(String[] args) {
 		OptionParser parser = new OptionParser();
-		parser.accepts("no-encrypt-line", "Don't encrypt the password names and schemes");
+		parser.accepts("set-default", "Set this as the default password database if one already exists");
 		parser.accepts("debug", "Print all stack traces");
+		parser.accepts("help", "Print usage information");
 		OptionSet options = parser.parse(args);
+		if(options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
 		boolean debug = options.has("debug");
 		try{
-			String fileName = Dropbox.getSkeyDbFile().getAbsolutePath();
+			String fileName = DesktopFS.getSkeyDropboxFile().getAbsolutePath();
 			initDatabase(fileName, options);
 		}
 		catch(IOException e) {

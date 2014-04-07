@@ -8,7 +8,7 @@ import ibur.skey.PasswordGen;
 import ibur.skey.PasswordGen.PwReq;
 import ibur.skey.PasswordProvider;
 import ibur.skey.Util;
-import ibur.skey.client.Dropbox;
+import ibur.skey.client.DesktopFS;
 
 import java.io.BufferedWriter;
 import java.io.File;

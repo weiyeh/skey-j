@@ -14,14 +14,14 @@ public class Util {
 	
 	public static final Console console = System.console();
 	
-	private static PasswordProvider pwProv;
+	public static PasswordProvider pwProv;
 	
 	private static byte[] password;
 	
 	public static byte[] getPassword(boolean forceRefresh) {
 		try {
 			if(password == null || forceRefresh) {
-				password = pwProv.getPassword();
+				password = pwProv.getPassword("Enter master password");
 			}
 			return password;
 		}

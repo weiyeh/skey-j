@@ -1,5 +1,5 @@
 package ibur.skey;
 
 public interface PasswordProvider {
-	public byte[] getPassword();
+	public byte[] getPassword(String prompt);
 }

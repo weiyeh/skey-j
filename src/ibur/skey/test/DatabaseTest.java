@@ -112,7 +112,7 @@ public class DatabaseTest {
 	private static class StaticPasswordProvider implements PasswordProvider {
 
 		@Override
-		public byte[] getPassword() {
+		public byte[] getPassword(String prompt) {
 			try{
 				return "iburinoc skey database gen test*!D".getBytes("UTF-8");
 			}

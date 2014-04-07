@@ -160,8 +160,8 @@ public class CLI {
 	
 	private static class CLIPasswordProvider implements PasswordProvider {
 		@Override
-		public byte[] getPassword() {
-			System.out.print("Enter encryption/decryption password: ");
+		public byte[] getPassword(String prompt) {
+			System.out.print(prompt);
 			try{
 				if(Util.console == null) {
 					return Util.sin.nextLine().getBytes("UTF-8");

@@ -147,7 +147,7 @@ public class Database {
 		return db.keySet();
 	}
 
-	public String getPassword(String key) throws Exception {
+	public String getPassword(String key) throws CryptoException {
 		try{
 			byte[] enc = B64.decode(db.get(key).get("PW"));
 
@@ -155,6 +155,7 @@ public class Database {
 			return new String(Crypto.decryptScheme(Util.getPassword(false), enc, scheme), "UTF-8").trim();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
+		} catch(NullPointerException e) {
 		}
 		return null;
 	}

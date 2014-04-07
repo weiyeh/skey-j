@@ -7,9 +7,6 @@ import ibur.skey.PasswordGen;
 import ibur.skey.PasswordProvider;
 import ibur.skey.Util;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,7 +30,7 @@ public class CLI {
 				if("add".equals(args[0])) {
 
 				} else if("get".equals(args[0])) {
-
+					getRun(removeStart(args, 1));
 				} else if("gen".equals(args[0])) {
 					genRun(removeStart(args, 1));
 				} else if("init".equals(args[0])) {
@@ -53,6 +50,73 @@ public class CLI {
 		}
 	}
 
+	private static void getRun(String[] args) {
+		OptionParser parser = new OptionParser();
+		parser.accepts("file", "File for the password database").withRequiredArg();
+		parser.accepts("f", "File for the password database").withRequiredArg();
+		parser.accepts("name", "Name of password").withRequiredArg();
+		parser.accepts("n", "Name of password").withRequiredArg();
+		parser.accepts("p", "Print the password instead of copying it to clipboard");
+		parser.accepts("print", "Print the password instead of copying it to clipboard");
+		parser.accepts("debug", "Print all stack traces");
+		parser.accepts("help", "Print usage information");
+		OptionSet options = parser.parse(args);
+		if(options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
+//		boolean debug = options.has("debug");
+		String fname = null;
+		if(options.has("file")) {
+			fname = (String) options.valueOf("file");
+		} else if(options.has("f")) {
+			fname = (String) options.valueOf("f");
+		} else {
+			Properties prefs = DesktopFS.getPrefs();
+			fname = prefs.getProperty("Default-DB"); // will stay null if does not exist
+		}
+		if(fname == null) {
+			System.out.println("File name: ");
+			fname = in.nextLine();
+		}
+		if (fname.startsWith("~" + File.separator)) {
+			fname = System.getProperty("user.home") + fname.substring(1);
+		}
+
+		Database db = new Database(new File(fname));
+
+		String pwname = null;
+		if(options.has("name")) {
+			pwname = (String) options.valueOf("name");
+		} else if(options.has("n")) {
+			pwname = (String) options.valueOf("n");
+		}
+		if(pwname == null) {
+			System.out.println("Enter entry name of this password");
+			pwname = in.nextLine();
+		}
+		if("".equals(pwname)) {
+			throw new RuntimeException("Invalid password name");
+		}
+		
+		try{
+			String pw = db.getPassword(pwname);
+			if(pw == null) {
+				throw new RuntimeException("Password not found");
+			}
+			Util.setClipboard(pw);
+			System.out.println("Password copied to clipboard");
+		}
+		catch(CryptoException e) {
+			throw new RuntimeException("A cryptography error occurred");
+		}
+
+	}
+	
 	private static void genRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
@@ -159,10 +223,8 @@ public class CLI {
 			}
 			try{
 				db.writeToFile(dbout, Util.getPassword(false), AES256);
-				StringSelection selection = new StringSelection(pw);
-			    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			    clipboard.setContents(selection, selection);
-			    System.out.println("Password copied to clipboard and written to file");
+				Util.setClipboard(pw);
+				System.out.println("Password copied to clipboard and written to file");
 			}
 			catch (IOException e) {
 				if(debug) {

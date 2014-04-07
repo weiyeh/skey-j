@@ -1,5 +1,8 @@
 package ibur.skey;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.Console;
 import java.util.Scanner;
 
@@ -40,5 +43,11 @@ public class Util {
 			res = res && (a[i] == b[i]);
 		}
 		return res;
+	}
+	
+	public static void setClipboard(String cb) {
+		StringSelection selection = new StringSelection(cb);
+	    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	    clipboard.setContents(selection, selection);
 	}
 }

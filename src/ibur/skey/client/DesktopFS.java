@@ -110,4 +110,16 @@ public class DesktopFS {
 			throw new RuntimeException("Could not write preferences to file");
 		}
 	}
+	
+	public static void backupFile(File fin, File fout) throws IOException {
+		FileOutputStream bakout = new FileOutputStream(fout);
+		FileInputStream bakin = new FileInputStream(fin);
+		byte[] buf = new byte[8192];
+		int read = 0;
+		while((read = bakin.read(buf)) != -1) {
+			bakout.write(buf, 0, read);
+		}
+		bakin.close();
+		bakout.close();
+	}
 }

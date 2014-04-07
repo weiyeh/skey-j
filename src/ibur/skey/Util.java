@@ -21,7 +21,7 @@ public class Util {
 	public static byte[] getPassword(boolean forceRefresh) {
 		try {
 			if(password == null || forceRefresh) {
-				password = pwProv.getPassword("Enter master password");
+				password = pwProv.getPassword("Enter master password: ");
 			}
 			return password;
 		}

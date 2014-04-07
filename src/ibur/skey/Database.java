@@ -1,5 +1,6 @@
 package ibur.skey;
 
+import static ibur.skey.Crypto.AES256;
 import ibur.lib.B64;
 
 import java.io.BufferedReader;
@@ -15,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bouncycastle.crypto.params.KeyParameter;
-import static ibur.skey.Crypto.AES256;
 
 public class Database {
 	private Map<String, Map<String, String>> db;
@@ -29,7 +29,7 @@ public class Database {
 	 * @param in
 	 * @throws Exception
 	 */
-	public Database(File in) throws Exception {
+	public Database(File in) {
 		BufferedReader br = null;
 		try{
 			db = new HashMap<String, Map<String,String>>();
@@ -71,14 +71,22 @@ public class Database {
 				subdb.put("ORIG", origLine);
 				db.put(parts[0], subdb);
 			}
+		} catch (UnsupportedEncodingException e) {
+			System.err.println("ERROR: UTF-8 unsupported");
+			System.exit(-1);
+		} catch (CryptoException e) {
+			throw new RuntimeException("A cryptography error occurred");
+		} catch (IOException e) {
+			throw new RuntimeException("Could not read file");
 		}
-		catch(Exception e) {
-			e.printStackTrace();
-			throw new Exception("File parse failed");
-		}
+		
 		finally {
 			if(br != null) {
-				br.close();
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -151,7 +159,7 @@ public class Database {
 		return null;
 	}
 	
-	public void putPassword(String name, String passString, String scheme) throws Exception {
+	public void putPassword(String name, String passString, String scheme) throws CryptoException {
 		try{
 			byte[] pw = passString.getBytes("UTF-8");
 			Map<String, String> entry = new HashMap<String, String>();

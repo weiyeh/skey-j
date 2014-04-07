@@ -3,9 +3,13 @@ package ibur.skey.client;
 import static ibur.skey.Crypto.AES256;
 import ibur.skey.CryptoException;
 import ibur.skey.Database;
+import ibur.skey.PasswordGen;
 import ibur.skey.PasswordProvider;
 import ibur.skey.Util;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,9 +21,9 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 public class CLI {
-	
+
 	private static Scanner in = new Scanner(System.in);
-	
+
 	public static void main(String[] args) {
 		try{
 			Util.setPasswordProvider(new CLIPasswordProvider());
@@ -48,14 +52,16 @@ public class CLI {
 			in.close();
 		}
 	}
-	
+
 	private static void genRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
 		parser.accepts("f", "File for the password database").withRequiredArg();
 		parser.accepts("name", "Name for new password").withRequiredArg();
 		parser.accepts("n", "Name for new password").withRequiredArg();
+		parser.accepts("length", "Length for new password").withRequiredArg();
 		parser.accepts("l", "Length for new password").withRequiredArg();
+		parser.accepts("no-backup", "Don't backup the password database before writing the new password");
 		parser.accepts("debug", "Print all stack traces");
 		parser.accepts("help", "Print usage information");
 		OptionSet options = parser.parse(args);
@@ -67,6 +73,7 @@ public class CLI {
 			}
 			return;
 		}
+		boolean debug = options.has("debug");
 		String fname = null;
 		if(options.has("file")) {
 			fname = (String) options.valueOf("file");
@@ -81,9 +88,11 @@ public class CLI {
 			fname = in.nextLine();
 		}
 		if (fname.startsWith("~" + File.separator)) {
-		    fname = System.getProperty("user.home") + fname.substring(1);
+			fname = System.getProperty("user.home") + fname.substring(1);
 		}
-		
+
+		Database db = new Database(new File(fname));
+
 		String pwname = null;
 		if(options.has("name")) {
 			pwname = (String) options.valueOf("name");
@@ -97,18 +106,77 @@ public class CLI {
 		if("".equals(pwname)) {
 			throw new RuntimeException("Invalid password name");
 		}
-		
+
+		if(db.names().contains(pwname)) {
+			throw new RuntimeException("Name already exists in database");
+		}
+
 		int len = -1;
-		if(options.has("l")) {
+		if(options.has("length")) {
 			try {
-				len = Integer.parseInt(options.valueOf("l"));
+				len = Integer.parseInt((String)options.valueOf("length"));
 			}
 			catch(NumberFormatException e) {
-				throw new RuntimeException("Invalid length of ")
+				throw new RuntimeException("Invalid length of password");
+			}
+		} else if(options.has("l")) {
+			try {
+				len = Integer.parseInt((String)options.valueOf("l"));
+			}
+			catch(NumberFormatException e) {
+				throw new RuntimeException("Invalid length of password");
+			}
+		} else {
+			System.out.println("Password length:");
+			try{
+				len = Integer.parseInt(in.nextLine());
+			}
+			catch(NumberFormatException e) {
+				throw new RuntimeException("Invalid length of password");
 			}
 		}
+		if(len < 1) {
+			throw new RuntimeException("Invalid length of password");
+		}
+
+		// TODO: Options for PwReq to use
+		String pw = PasswordGen.generatePassword(len, new PasswordGen.PwReq());
+		try{
+			db.putPassword(pwname, pw, AES256);
+			File dbout = new File(fname);
+			if(!options.has("no-backup")) {
+				try{
+					String bak = fname.substring(0, fname.length() - 3) + "bak";
+					File bakfile = new File(bak);
+					DesktopFS.backupFile(dbout, bakfile);
+				}
+				catch(IOException e) {
+					if(debug) {
+						e.printStackTrace();
+					}
+					throw new RuntimeException("Could not create backup");
+				}
+			}
+			try{
+				db.writeToFile(dbout, Util.getPassword(false), AES256);
+				StringSelection selection = new StringSelection(pw);
+			    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			    clipboard.setContents(selection, selection);
+			    System.out.println("Password copied to clipboard and written to file");
+			}
+			catch (IOException e) {
+				if(debug) {
+					e.printStackTrace();
+				}
+				throw new RuntimeException("Could not write database file");
+			}
+		}
+		catch(CryptoException e) {
+			throw new RuntimeException("A cryptography error occurred");
+		}
+
 	}
-	
+
 	private static void initRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("file", "File for the password database").withRequiredArg();
@@ -133,7 +201,7 @@ public class CLI {
 		}
 		initDatabase(fileName, options);
 	}
-	
+
 	private static void initdRun(String[] args) {
 		OptionParser parser = new OptionParser();
 		parser.accepts("set-default", "Set this as the default password database if one already exists");
@@ -160,7 +228,7 @@ public class CLI {
 			throw new RuntimeException("File exception occurred");
 		}
 	}
-	
+
 	private static void initDatabase(String fname, OptionSet options) {
 		boolean debug = options.has("debug");
 		if(fname == null) {
@@ -168,7 +236,7 @@ public class CLI {
 			fname = in.nextLine();
 		}
 		if (fname.startsWith("~" + File.separator)) {
-		    fname = System.getProperty("user.home") + fname.substring(1);
+			fname = System.getProperty("user.home") + fname.substring(1);
 		}
 		File dbfile = new File(fname);
 		if(dbfile.exists()) {
@@ -200,7 +268,7 @@ public class CLI {
 			throw new RuntimeException("A cryptography error occurred");
 		}
 	}
-	
+
 	private static void printUsage() {
 		System.out.println("usage: skey <command> [<args>]");
 		System.out.println();
@@ -212,13 +280,13 @@ public class CLI {
 		System.out.println("   initd   Create new password database in the Dropbox folder");
 		System.out.println("   help    Show this dialog");
 	}
-	
+
 	private static String[] removeStart(String[] arr, int offset) {
 		String[] n = new String[arr.length - offset];
 		System.arraycopy(arr, offset, n, 0, n.length);
 		return n;
 	}
-	
+
 	private static class CLIPasswordProvider implements PasswordProvider {
 		@Override
 		public byte[] getPassword(String prompt) {

@@ -29,7 +29,7 @@ public class Util {
 			return password;
 		}
 		catch(NullPointerException e) {
-			throw new RuntimeException("ERROR: No password provider.");
+			throw new RuntimeException("No password provider.");
 		}
 	}
 	

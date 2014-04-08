@@ -174,6 +174,10 @@ public class Database {
 		}
 	}
 	
+	public void remove(String pwname) {
+		db.remove(pwname);
+	}
+	
 	public String getScheme(String key) throws Exception {
 		return db.get(key).get("SCHEME");
 	}

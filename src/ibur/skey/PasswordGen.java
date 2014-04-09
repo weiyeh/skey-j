@@ -75,6 +75,7 @@ public class PasswordGen {
 						for(char c = min; c <= max; c++) {
 							charset += c;
 						}
+						i += 2;
 					} else {
 						charset += proc.charAt(i);
 					}

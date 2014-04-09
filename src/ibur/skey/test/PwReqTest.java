@@ -1,12 +1,13 @@
 package ibur.skey.test;
 
-import ibur.skey.PasswordGen.PwReq;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
+import static ibur.skey.PasswordGen.PwReq;
 
 public class PwReqTest {
 	@Test
 	public void test() {
-		new PwReq("a-zA-Z9-0._\\-");
+		assertEquals(new String(new PwReq("a-zA-Z9-0._\\-").getCharset()), "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-");
 	}
 }

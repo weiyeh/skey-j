@@ -4,6 +4,7 @@ import static ibur.skey.Crypto.AES256;
 import ibur.skey.CryptoException;
 import ibur.skey.Database;
 import ibur.skey.PasswordGen;
+import ibur.skey.PasswordGen.PwReq;
 import ibur.skey.PasswordProvider;
 import ibur.skey.Util;
 
@@ -229,6 +230,7 @@ public class CLI {
 		parser.accepts("n", "Name for new password").withRequiredArg();
 		parser.accepts("length", "Length for new password").withRequiredArg();
 		parser.accepts("l", "Length for new password").withRequiredArg();
+		parser.accepts("charset", "Set the characeters to be used in the generation, of the form a-zA-Z0-9._- for example").withRequiredArg();
 		parser.accepts("no-backup", "Don't backup the password database before writing the new password");
 		parser.accepts("p", "Print the password instead of copying it to clipboard");
 		parser.accepts("print", "Print the password instead of copying it to clipboard");
@@ -309,8 +311,14 @@ public class CLI {
 			throw new RuntimeException("Invalid length of password");
 		}
 
-		// TODO: Options for PwReq to use
-		String pw = PasswordGen.generatePassword(len, new PasswordGen.PwReq());
+		PwReq p = null;
+		if(options.has("charset")) {
+			p = new PwReq((String) options.valueOf("charset"));
+		} else {
+			p = new PwReq();
+		}
+		String pw = PasswordGen.generatePassword(len, p);
+		System.out.println("Password generated with " + (int) p.getEntropy(len) + " bits of entropy");
 		try{
 			db.putPassword(pwname, pw, AES256);
 			File dbout = new File(fname);

@@ -42,6 +42,8 @@ public class CLI {
 					initdRun(removeStart(args, 1));
 				} else if("rm".equals(args[0])) {
 					rmRun(removeStart(args, 1));
+				} else if("setd".equals(args[0])) {
+					setdRun(removeStart(args, 1));
 				} else {
 					printUsage();
 				}
@@ -568,6 +570,39 @@ public class CLI {
 
 	}
 
+	private static void setdRun(String[] args) {
+		OptionParser parser = new OptionParser();
+		parser.accepts("file", "File for the new default password database").withRequiredArg();
+		parser.accepts("f", "File for the new default password database").withRequiredArg();
+		parser.accepts("help", "Print usage information");
+		OptionSet options = parser.parse(args);
+		if(options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		String fname = null;
+		if(options.has("file")) {
+			fname = (String) options.valueOf("file");
+		} else if(options.has("f")) {
+			fname = (String) options.valueOf("f");
+		}
+		if(fname == null) {
+			System.out.println("File name for new database: ");
+			fname = in.nextLine();
+		}
+		if (fname.startsWith("~" + File.separator)) {
+			fname = System.getProperty("user.home") + fname.substring(1);
+		}
+		Properties prefs = DesktopFS.getPrefs();
+		prefs.setProperty("Default-DB", fname);
+		DesktopFS.storePrefs(prefs);
+		System.out.println("New default set");
+	}
+
 	private static void printUsage() {
 		System.out.println("usage: skey <command> [<args>]");
 		System.out.println();
@@ -580,6 +615,7 @@ public class CLI {
 		System.out.println("   initd   Create new password database in the Dropbox folder");
 		System.out.println("   help    Show this dialog");
 		System.out.println("   rm      Remove a password");
+		System.out.println("   setd    Change the default database");
 	}
 
 	private static String[] removeStart(String[] arr, int offset) {

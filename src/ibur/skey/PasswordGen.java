@@ -10,23 +10,19 @@ public class PasswordGen {
 	public static String generatePassword(int pwlen, PwReq req) {
 		char[] charset = req.getCharset();
 		String res = "";
-		do {
 			char[] out = new char[pwlen];
 			for(int i = 0; i < pwlen; i++) {
 				out[i] = charset[Crypto.r.nextInt(charset.length)];
 			}
 			res = new String(out);
-		} while(!req.validatePW(res));
 		return res;
 	}
 
 	public static class PwReq {
 		private static final String COMMON_SYMBOLS = "~!@#$%^&*()-_+=";
 		private static final String LOWERCASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
-		private static final String UPPERCASE_LETTERS = LOWERCASE_LETTERS.toUpperCase();
+		private static final String UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		private static final String NUMBERS = "0123456789";
-
-		private String usedSymbols;
 
 		/**
 		 * -1: none, 0: any number, 1: required
@@ -36,79 +32,61 @@ public class PasswordGen {
 		public int numbers;
 		public int symbols;
 
+		String charset;
+		
 		public PwReq() {
-			lcase = 0;
-			ucase = 0;
-			numbers = 0;
-			symbols = 0;
-			usedSymbols = COMMON_SYMBOLS;
+			charset = "";
+			charset += LOWERCASE_LETTERS;
+			charset += UPPERCASE_LETTERS;
+			charset += NUMBERS;
+			charset += COMMON_SYMBOLS;
+		}
+		
+		public PwReq(String scheme) {
+			this.charset = "";
+			String proc = "";
+			boolean escaped = false;
+			for(int i = 0; i < scheme.length(); i++) {
+				char c = scheme.charAt(i);
+				if(c == '-') {
+					if(escaped) {
+						proc += c;
+						escaped = false;
+					} else {
+						proc += (char) 31;
+					}
+				} else if(c == '\\') {
+					if(escaped) {
+						proc += c;
+						escaped = false;
+					} else {
+						escaped = true;
+					}
+				} else {
+					escaped = false;
+					proc += c;
+				}
+			}
+			for(int i = 0; i < proc.length(); i++) {
+				if(i < proc.length() - 2) {
+					if(proc.charAt(i + 1) == 31) {
+						char min = proc.charAt(i) < proc.charAt(i+2) ? proc.charAt(i) : proc.charAt(i+2);
+						char max = proc.charAt(i) >= proc.charAt(i+2) ? proc.charAt(i) : proc.charAt(i+2);
+						for(char c = min; c <= max; c++) {
+							charset += c;
+						}
+					} else {
+						charset += proc.charAt(i);
+					}
+				} else {
+					charset += proc.charAt(i);
+				}
+			}
+			System.out.println(charset);
 		}
 
 		public char[] getCharset() {
-			String out = "";
-			if(lcase >= 0) {
-				out += LOWERCASE_LETTERS;
-			}
-			if(ucase >= 0) {
-				out += UPPERCASE_LETTERS;
-			}
-			if(numbers >= 0) {
-				out += NUMBERS;
-			}
-			if(symbols >= 0) {
-				out += usedSymbols;
-			}
-			return out.toCharArray();
-		}
-
-		public boolean validatePW(String pw) {
-			int lcaseNum = 0;
-			int ucaseNum = 0;
-			int numbersNum = 0;
-			int symbolsNum = 0;
-			for(int i = 0; i < pw.length(); i++) {
-				char c = pw.charAt(i);
-
-				// lcase check
-				if(c >= 'a' && c <= 'z') {
-					lcaseNum++;
-				}
-
-				// ucase check
-				else if(c >= 'A' && c <= 'Z') {
-					ucaseNum++;
-				}
-
-				// numbers check
-				else if(c >= '0' && c <= '9') {
-					numbersNum++;
-				}
-
-				// symbols check
-				else if(usedSymbols.indexOf(c) >= 0) {
-					symbolsNum++;
-				}
-			}
-
-			boolean ret = true;
-
-			if(lcaseNum < lcase || lcaseNum > 0 && lcase == -1) {
-				ret = false;
-			}
-
-			if(ucaseNum < ucase || ucaseNum > 0 && ucase == -1) {
-				ret = false;
-			}
-
-			if(numbersNum < numbers || numbersNum > 0 && numbers == -1) {
-				ret = false;
-			}
-
-			if(symbolsNum < symbols || symbolsNum > 0 && symbols == -1) {
-				ret = false;
-			}
-
-			return ret;
+			return charset.toCharArray();
 		}
 		
 		public double getEntropy(int len) {
